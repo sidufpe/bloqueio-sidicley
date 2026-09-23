@@ -13,25 +13,25 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v3
 
-      - name: Aceitar licenças e configurar SDK
+      - name: Configurar SDK
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           mkdir -p app
           echo "sdk.dir=$ANDROID_HOME" > app/local.properties
           yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
 
       - name: Compilar APK
         run: |
           chmod +x gradlew || true
-          ls -la gradle/wrapper/ || true
+          # Se não tem o wrapper jar, cria agora
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "Criando gradle wrapper..."
+            gradle wrapper --gradle-version 8.5
+          fi
           ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: app-sidicley-apk
-          path: |
-            app/build/outputs/apk/debug/*.apk
-            app/build/outputs/apk/**/*.apk
+          path: app/build/outputs/apk/debug/*.apk
